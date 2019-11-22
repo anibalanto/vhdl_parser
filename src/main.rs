@@ -218,8 +218,8 @@ fn vhdl_file_to_json(path: &String, test: bool) {
 
 fn help() {
     println!("usage:
-vhdl_pasrse <FILE> [options]
-options {{testmode}} ");
+vhdl_parser <FILE> [options]
+options {{test}} ");
 }
 
 use std::env;
@@ -242,20 +242,5 @@ fn main() {
             help();
         }
     }
-
-
-
-
 }
 
-
-
-
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
