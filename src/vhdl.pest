@@ -1,0 +1,77 @@
+//
+// Created by intellij-pest on 2019-10-24
+// grammar.pest
+// Author: Anibal
+//
+
+//spaces
+s = _{ (" "|"\t")+ }
+
+char = _{ ASCII_ALPHANUMERIC | "_" }
+
+alpha = _{ 'a'..'z' | 'A'..'Z' }
+digit = _{ '0'..'9' }
+
+// TODO excluir palabras claves: when go statemachine def alias as
+alpha_char = _{ alpha ~ char* }
+
+identifier = { alpha_char }
+
+value = _{ alpha_char | digit+ }
+
+is = _{s? ~ ":" ~ s?}
+
+whls = _{ s? ~ NEWLINE ~ ( s? ~  NEWLINE )* ~ s? }
+
+endl = _{ ";" ~ whls }
+
+///////// > vhdl
+
+header = _{ (!(^"entity") ~ ANY )* }
+
+vhdl = _{ SOI ~ header? ~ entity ~ whls? ~ ( !(EOI) ~ ANY )*  ~ EOI }
+
+///////// > entity
+entity = { ^"entity" ~ s ~ identifier ~ s ~ ^"is" ~ whls ~
+            entity_block? ~
+            ^"end" ~ s ~ (^"entity" ~ s)? ~ alpha_char ~ ";"}
+
+entity_block = { generics?~
+                 ports? ~
+                 (def_signal ~ endl)* }
+
+//>>>> generics
+generics = { ^"generic" ~ s? ~ "(" ~ whls ~
+             (def_generic ~ endl)* ~
+             def_generic ~ whls ~
+             ")" ~ endl }
+
+def_generic = { identifier ~ is ~ type_def_generic ~ s? ~ ( ":=" ~ s? ~ value_def_generic ~ s? )? }
+type_def_generic = { ^"integer" }
+value_def_generic =  { digit+ }
+
+//>>>> ports
+ports = { ^"port" ~ s? ~ "(" ~ whls ~
+          (def_port ~ endl)* ~
+          def_port ~ whls ~
+          ")" ~ endl }
+
+def_port = { identifier ~ is ~ port_direction ~ s ~ type_def  }
+port_direction = { ^"in" | ^"out" }
+
+type_def = { type_vector | type_simple }
+type_simple = { ^"std_logic" }
+
+type_vector = _{ type_acc_vector ~ s? ~ vector }
+type_acc_vector = { ^"std_logic_vector" }
+
+vector = { "(" ~ s? ~ start ~ s ~ index_direction ~ s ~ end ~ s? ~ ")" }
+index_direction = _{ ^"to" | ^"downto" }
+start = { index }
+end = { index }
+index = _{ value ~ operation?  }
+operation = _{ ("+"|"-") ~ value }
+
+//>>>> signal
+def_signal = { ^"signal" ~ s ~ identifier ~ is ~ type_def }
+
