@@ -1,5 +1,5 @@
-use vhdl_parser::vhdl_to_json;
-use vhdl_parser::AstNode;
+use libvhdlparser::vhdl_to_json;
+use libvhdlparser::AstNode;
 
 use std::fs::File;
 use std::io::prelude::*;
