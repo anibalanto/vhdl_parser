@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 
 entity MaximoComunDivisor is
 generic(
-		n : integer
+		n : integer := 10
 	);
 	port(
 		reloj	: in	std_logic;
