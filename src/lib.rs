@@ -187,9 +187,9 @@ use std::os::raw::{c_char};
 use std::ffi::{CStr, CString};
 
 #[no_mangle]
-pub extern fn rust_vhdl_as_json(c_buf_statelang: *const c_char, c_buf_result: *mut *const c_char) -> bool {
+pub extern fn rust_vhdl_as_json(c_buf_input: *const c_char, c_buf_result: *mut *const c_char) -> bool {
     //make &CStr from C characters
-    let r_cstr: &CStr = unsafe { CStr::from_ptr(c_buf_statelang) };
+    let r_cstr: &CStr = unsafe { CStr::from_ptr(c_buf_input) };
     //make &str from &CStr
     let r_str = r_cstr.to_str().unwrap();
     //make String from accross format macros with the &str as parameter
