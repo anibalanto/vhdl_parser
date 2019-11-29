@@ -204,7 +204,7 @@ pub extern fn rust_vhdl_as_json(c_buf_statelang: *const c_char, c_buf_result: *m
         },
         Err(e) => {
             //error string
-            let error_string = format!("[statelang error] {}", e);
+            let error_string = format!("[parse error]\n{}", e);
             //make a e*const c_char from CString using into_raw to transfer the owning to C
             unsafe { *c_buf_result = CString::new(error_string).unwrap().into_raw() as *const c_char };
             //parse ok [NO c_buf_result as error message]
