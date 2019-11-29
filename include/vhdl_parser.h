@@ -6,22 +6,12 @@
 extern "C" bool rust_vhdl_as_json(const char *, char **);
 #endif
 
-class rust_exception: public std::exception
+class rust_exception: : public std::runtime_error
 {
-    const char* _what;
 public:
-    rust_exception(const char* what) : _what{what} { }
-
-    ~rust_exception()
-    {
-        delete _what;
-    }
-
-    virtual const char* what() const throw()
-    {
-        return _what;
-    }
-
+    myException(std::string const& msg):
+        std::runtime_error(msg)
+    {}
 };
 
 inline std::string vhdl_as_json(const std::string &str)
@@ -31,5 +21,5 @@ inline std::string vhdl_as_json(const std::string &str)
     {
         return std::string(result);
     }
-    throw rust_exception(result);
+    throw rust_exception({result}));
 }
