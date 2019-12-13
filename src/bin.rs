@@ -31,7 +31,7 @@ fn vhdl_file_to_json(path: &String, test: bool) {
                 println!("deserialized = {:?}", deserialized);
             }
         },
-        Err(e) => println!("{:?}", e)
+        Err(e) => eprintln!("Parsing error: {}", e)
     }
 }
 
