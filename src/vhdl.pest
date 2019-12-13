@@ -52,9 +52,12 @@ value_def_generic =  { digit+ }
 
 //>>>> ports
 ports = { ^"port" ~ s? ~ "(" ~ whls ~
-          (def_port ~ endl)* ~
-          def_port ~ whls ~
+          (line_def_port)* ~
+          last_def_port ~
           ")" ~ endl }
+
+line_def_port = { def_port ~ endl }
+last_def_port = { def_port ~ whls }
 
 def_port = { identifier ~ is ~ port_direction ~ s ~ type_def  }
 port_direction = { ^"in" | ^"out" }
