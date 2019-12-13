@@ -37,7 +37,7 @@ entity = { ^"entity" ~ s ~ identifier ~ s ~ ^"is" ~ whls ~
             ^"end" ~ s ~ (^"entity" ~ s)? ~ alpha_char ~ ";"}
 
 entity_block = { generics?~
-                 ports? ~
+                 ports ~
                  (def_signal ~ endl)* }
 
 //>>>> generics
@@ -52,21 +52,17 @@ value_def_generic =  { digit+ }
 
 //>>>> ports
 ports = { ^"port" ~ s? ~ "(" ~ whls ~
-          (line_def_port)* ~
-          last_def_port ~
+          (def_port ~ endl)* ~
+          def_port ~ whls ~
           ")" ~ endl }
-
-line_def_port = { def_port ~ endl }
-last_def_port = { def_port ~ whls }
 
 def_port = { identifier ~ is ~ port_direction ~ s ~ type_def  }
 port_direction = { ^"in" | ^"out" }
 
-type_def = { type_vector | type_simple }
-type_simple = { ^"std_logic" }
+type_def = { std_logic ~ vector_def? }
+std_logic = { ^"std_logic" }
 
-type_vector = _{ type_acc_vector ~ s? ~ vector }
-type_acc_vector = { ^"std_logic_vector" }
+vector_def = _{ ^"_vector" ~ s? ~ vector }
 
 vector = { "(" ~ s? ~ start ~ s ~ index_direction ~ s ~ end ~ s? ~ ")" }
 index_direction = _{ ^"to" | ^"downto" }
@@ -76,5 +72,5 @@ index = _{ value ~ operation?  }
 operation = _{ ("+"|"-") ~ value }
 
 //>>>> signal
-def_signal = { ^"signal" ~ s ~ identifier ~ is ~ type_def }
+def_signal = { ^"signal" ~ s ~ identifier ~ s ~ type_def }
 

@@ -15,8 +15,16 @@ use serde::{Serialize, Deserialize};
 pub enum AstNode {
     Entity{
         ident: String,
-        generics: Vec<AstNode>,
+        generics: Option<Vec<AstNode>>,
         ports: Vec<AstNode>,
+        signals: Vec<AstNode>,
+    },
+
+    Generic(Vec<AstNode>),
+    Port(Vec<AstNode>),
+    DefineSignal{
+        ident: String,
+        def_type: Box<AstNode>,
     },
 
     DefineGeneric{
@@ -48,19 +56,20 @@ pub enum AstNode {
 }
 
 use pest::error::Error;
-use crate::AstNode::{Entity, Vector, Null, DefineGeneric, DefinePort, Type, Int, Str};
+use crate::AstNode::{Entity, Vector, Null, DefineGeneric, DefinePort, Type, Int, Str, Generic, DefineSignal, Port};
 use pest::iterators::{Pair, Pairs};
 
 pub fn parse(source: &str) -> Result<AstNode, Error<Rule>> {
     let mut pairs = GenParser::parse(Rule::vhdl, source)?;
-    Ok(build_ast_from_expr(pairs.next().unwrap()))
+    Ok(build_ast(pairs.next().unwrap()))
 }
 
-fn build_ast_from_expr(pair: Pair<Rule>) -> AstNode {
+fn build_ast(pair: Pair<Rule>) -> AstNode {
 
     fn as_string(pair: Pair<Rule>) -> String {
         pair.as_str().to_string()
     }
+
     fn next_item_as_string(pair: & mut Pairs<Rule>) -> String {
         match pair.next() {
             Some(pair) => as_string(pair),
@@ -68,12 +77,12 @@ fn build_ast_from_expr(pair: Pair<Rule>) -> AstNode {
         }
     }
     fn next_item(pair: & mut Pairs<Rule>) -> AstNode {
-        build_ast_from_expr(pair.next().expect("no pair here: try make ast from it!"))
+        build_ast(pair.next().expect("no pair here: try make ast from it!"))
     }
     fn items_as_vector(pair: Pairs<Rule>) -> Vec<AstNode> {
         pair
             .map(|rule| {
-                build_ast_from_expr(rule)
+                build_ast(rule)
             })
             .collect()
     }
@@ -81,19 +90,44 @@ fn build_ast_from_expr(pair: Pair<Rule>) -> AstNode {
     match pair.as_rule() {
         Rule::entity => {
             let mut pair = pair.into_inner();
-            let ident = next_item_as_string(& mut pair);
-            pair = pair.next().expect("entity_block dont found")
-                .into_inner();
-            let generics = items_as_vector(pair.next().
-                expect("generics dont found").
-                into_inner());
-            let ports = items_as_vector(pair.next().
-                expect("ports dont found").
-                into_inner());
+            let ident = as_string(pair.next().expect("entity ident not found"));
+
+            let mut generics: Option<Vec<AstNode>> = None;
+            let mut ports: Vec<AstNode> = Vec::new();
+            let mut signals: Vec<AstNode> = Vec::new();
+            let pair = pair.next().expect("entity_block not found").into_inner();
+            for reg in pair {
+                match build_ast(reg) {
+                    AstNode::Generic(vec) =>
+                        generics = Some(vec),
+                    AstNode::Port(vec) =>
+                        ports = vec,
+                    AstNode::DefineSignal {ident, def_type} => {
+                        signals.push(
+                            AstNode::DefineSignal{
+                                ident,
+                                def_type
+                            });
+                    }
+                    _ => ()
+                }
+            }
             Entity {
                 ident,
                 generics,
-                ports
+                ports,
+                signals
+            }
+        },
+        Rule::generics =>
+            Generic(items_as_vector(pair.into_inner())),
+        Rule::ports =>
+            Port(items_as_vector(pair.into_inner())),
+        Rule::def_signal =>{
+            let mut pair = pair.into_inner();
+            DefineSignal {
+                ident: next_item_as_string(&mut pair),
+                def_type: Box::new(next_item(&mut pair)),
             }
         },
         Rule::type_def_generic =>
@@ -108,7 +142,7 @@ fn build_ast_from_expr(pair: Pair<Rule>) -> AstNode {
                 Some(vector_item) =>
                     Type {
                         name,
-                        vector: Some(Box::new(build_ast_from_expr(vector_item))),
+                        vector: Some(Box::new(build_ast(vector_item))),
                     },
                 None =>
                     Type {
