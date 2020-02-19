@@ -30,7 +30,7 @@ pub enum AstNode {
     DefineGeneric{
         ident: String,
         def_type: Box<AstNode>,
-        value: Option<String>
+        value: Option<Box<AstNode>>
     },
 
     DefinePort{
@@ -42,6 +42,12 @@ pub enum AstNode {
     Type{
         name: String,
         vector: Option<Box<AstNode>>
+    },
+
+    Operation {
+        left: Box<AstNode>,
+        operator: String,
+        right: Box<AstNode>
     },
 
     Vector{
@@ -56,7 +62,7 @@ pub enum AstNode {
 }
 
 use pest::error::Error;
-use crate::AstNode::{Entity, Vector, Null, DefineGeneric, DefinePort, Type, Int, Str, Generic, DefineSignal, Port};
+use crate::AstNode::{Entity, Operation, Vector, Null, DefineGeneric, DefinePort, Type, Int, Str, Generic, DefineSignal, Port};
 use pest::iterators::{Pair, Pairs};
 
 pub fn parse(source: &str) -> Result<AstNode, Error<Rule>> {
@@ -155,21 +161,15 @@ fn build_ast(pair: Pair<Rule>) -> AstNode {
             let mut pair = pair.into_inner();
             let ident = next_item_as_string(& mut pair);
             let def_type = Box::new(next_item(& mut pair));
-            match pair.next() {
-                Some(value_item) =>
-                    DefineGeneric {
-                        ident,
-                        def_type,
-                        value: Some(as_string(value_item)),
-                    },
-                None =>
-                    DefineGeneric {
-                        ident: ident,
-                        def_type,
-                        value: None,
-                    }
+            DefineGeneric {
+                ident,
+                def_type,
+                value: match pair.next() {
+                    Some(value_item) =>
+                        Some(Box::new(Int(value_item.as_str().parse::<u32>().unwrap()))),
+                    None => None
+                }
             }
-
         },
         Rule::def_port => {
             let mut pair = pair.into_inner();
@@ -181,22 +181,32 @@ fn build_ast(pair: Pair<Rule>) -> AstNode {
         },
         Rule::vector => {
             let mut pair = pair.into_inner();
-            let start = next_item_as_string(& mut pair);
-            let end = next_item_as_string(& mut pair);
-
-            fn index(istr: &String) -> Box<AstNode> {
-                match istr.parse::<u32>() {
-                    Ok(iu32) => Box::new(Int(iu32)),
-                    Err(_) => Box::new(Str(istr.to_owned()))
-                }
-            }
-
             Vector {
-                start: index(&start),
-                end: index(&end)
+                start: Box::new(build_ast(pair.next().unwrap())),
+                end: Box::new(build_ast(pair.next().unwrap()))
             }
         }
-
+        Rule::max_term | Rule::min_term | Rule::minmin_term | Rule::term => {
+            let mut pair = pair.into_inner();
+            let first = pair.next().expect("first not found");
+            match pair.next() {
+                Some(oper) => {
+                    Operation{
+                        left: Box::new(build_ast(first)),
+                        operator: oper.as_str().to_string(),
+                        right: Box::new(build_ast(pair.next().expect("right not found")))
+                    }
+                },
+                None =>
+                    build_ast(first)
+            }
+        },
+        Rule::identifier => {
+            Str(pair.as_str().to_owned())
+        },
+        Rule::integer_value => {
+            Int(pair.as_str().parse::<u32>().unwrap())
+        },
         _ => Null
     }
 }

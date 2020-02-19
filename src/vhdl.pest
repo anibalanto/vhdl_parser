@@ -17,6 +17,8 @@ alpha_char = _{ alpha ~ char* }
 
 identifier = { alpha_char }
 
+integer_value = { digit+ }
+
 value = _{ alpha_char | digit+ }
 
 is = _{s? ~ ":" ~ s?}
@@ -64,12 +66,21 @@ std_logic = { ^"std_logic" }
 
 vector_def = _{ ^"_vector" ~ s? ~ vector }
 
-vector = { "(" ~ s? ~ start ~ s ~ index_direction ~ s ~ end ~ s? ~ ")" }
+vector = { "(" ~ s? ~ expr ~ s ~ index_direction ~ s ~ expr ~ s? ~ ")" }
 index_direction = _{ ^"to" | ^"downto" }
-start = { index }
-end = { index }
-index = _{ value ~ operation?  }
-operation = _{ ("+"|"-") ~ value }
+//start = { expr }
+//end = { expr }
+//index = _{ value ~ operation?  }
+//operation = _{ ("+"|"-") ~ value }
+expr = _{ max_term | max_term_block}
+max_term_block = _{ "(" ~ max_term ~ ")" }
+max_term = { (max_term_block | min_term) ~ max_op ~ expr | min_term}
+min_term = { (max_term_block | minmin_term) ~ min_op ~ (min_term | max_term_block) | minmin_term }
+minmin_term = { (max_term_block | term) ~ minmin_op ~ (minmin_term | max_term_block) | term }
+max_op = { "+" | "-" }
+min_op = { "*" }
+minmin_op = { "/" }
+term = { integer_value | identifier }
 
 //>>>> signal
 def_signal = { ^"signal" ~ s ~ identifier ~ s ~ type_def }
