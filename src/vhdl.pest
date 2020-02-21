@@ -74,12 +74,12 @@ index_direction = _{ ^"to" | ^"downto" }
 //operation = _{ ("+"|"-") ~ value }
 expr = _{ max_term | max_term_block}
 max_term_block = _{ "(" ~ max_term ~ ")" }
-max_term = { (max_term_block | min_term) ~ max_op ~ expr | min_term}
-min_term = { (max_term_block | minmin_term) ~ min_op ~ (min_term | max_term_block) | minmin_term }
-minmin_term = { (max_term_block | term) ~ minmin_op ~ (minmin_term | max_term_block) | term }
+max_term = { (med_term  | max_term_block)   ~ max_op ~  expr 							| med_term  }
+med_term = { (min_term  | max_term_block)   ~ med_op ~ (med_term    | max_term_block)   | min_term 	}
+min_term = { (term 	    | max_term_block)   ~ min_op ~ (min_term    | max_term_block) 	| term 		}
 max_op = { "+" | "-" }
-min_op = { "*" }
-minmin_op = { "/" }
+med_op = { "*" }
+min_op = { "/" }
 term = { integer_value | identifier }
 
 //>>>> signal

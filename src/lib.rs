@@ -186,7 +186,7 @@ fn build_ast(pair: Pair<Rule>) -> AstNode {
                 end: Box::new(build_ast(pair.next().unwrap()))
             }
         }
-        Rule::max_term | Rule::min_term | Rule::minmin_term | Rule::term => {
+        Rule::max_term | Rule::med_term | Rule::min_term | Rule::term => {
             let mut pair = pair.into_inner();
             let first = pair.next().expect("first not found");
             match pair.next() {
